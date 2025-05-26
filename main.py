@@ -1,6 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from pydantic import BaseModel
 import torch
 from torch import nn
+from torchvision import transforms
+from PIL import Image
+import io
+
+class Item(BaseModel):
+    text: str
 
 class Cifar10_clf(nn.Module):
     def __init__(self):
@@ -20,7 +27,6 @@ class Cifar10_clf(nn.Module):
         x = self.fc1(x)
         x = self.fc2(x)
         return x
-    
 
 app = FastAPI()
 model = Cifar10_clf()
@@ -31,8 +37,22 @@ model.eval()
 def root():
     return {"hello": "world"}
 
-@app.post("/items")
-def create_item(item: str):
-    items.append(item)
-    return items
 
+@app.post("/clf")
+def clf(file: UploadFile = File(...)):
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status_code=400, detail="Invalid image type")
+    
+    image = Image.open(io.BytesIO(file.file.read())).convert("RGB")
+
+    transform = transforms.Compose([
+        transforms.Resize((30, 30)),  # Must match your model's expected size
+        transforms.ToTensor(),
+    ])
+    
+    x = transform(image).unsqueeze(0)  # Add batch dimension
+    with torch.no_grad():
+        output = model(x)
+        prediction = torch.argmax(output, dim=1).item()
+    
+    return {"filename": file.filename, "prediction": prediction}
