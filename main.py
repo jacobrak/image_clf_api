@@ -32,6 +32,8 @@ app = FastAPI()
 model = Cifar10_clf()
 model.load_state_dict(torch.load("model.pth", weights_only=True))
 model.eval()
+classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
+           'dog', 'frog', 'horse', 'ship', 'truck']
 
 @app.get("/")
 def root():
@@ -46,7 +48,7 @@ def clf(file: UploadFile = File(...)):
     image = Image.open(io.BytesIO(file.file.read())).convert("RGB")
 
     transform = transforms.Compose([
-        transforms.Resize((30, 30)),  # Must match your model's expected size
+        transforms.Resize((32, 32)),  # Must match your model's expected size
         transforms.ToTensor(),
     ])
     
@@ -54,5 +56,5 @@ def clf(file: UploadFile = File(...)):
     with torch.no_grad():
         output = model(x)
         prediction = torch.argmax(output, dim=1).item()
-    
-    return {"filename": file.filename, "prediction": prediction}
+        label = classes[prediction]
+    return {"filename": file.filename, "prediction": prediction, "label":label}
