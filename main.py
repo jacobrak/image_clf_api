@@ -39,7 +39,6 @@ classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',
 def root():
     return {"hello": "world"}
 
-
 @app.post("/clf")
 def clf(file: UploadFile = File(...)):
     if file.content_type not in ["image/jpeg", "image/png"]:
