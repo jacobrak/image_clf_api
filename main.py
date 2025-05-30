@@ -37,8 +37,12 @@ classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',
 
 @app.get("/")
 def root():
-    return {"hello": "world"}
-
+    return {
+        "message": "Welcome to the CIFAR-10 classifier API",
+        "endpoints": {
+            "POST /clf": "Upload an image to classify"
+        }
+    }
 @app.post("/clf")
 def clf(file: UploadFile = File(...)):
     if file.content_type not in ["image/jpeg", "image/png"]:
